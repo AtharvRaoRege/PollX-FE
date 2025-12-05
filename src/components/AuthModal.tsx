@@ -70,7 +70,8 @@ const AuthModal: React.FC<AuthModalProps> = ({ onLogin, onSignup, onClose }) => 
             }
         } catch (err: any) {
             console.error("Auth failed", err);
-            setError("Connection failed. Credentials rejected.");
+            // Show the actual error message from the backend or network
+            setError(err.message || "Connection failed. Credentials rejected.");
             setIsAnimating(false);
             setProgress(0);
         }

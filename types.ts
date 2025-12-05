@@ -50,6 +50,7 @@ export interface Poll {
   createdAt: Date;
   authorId: string;
   isHot: boolean;
+  isEdited?: boolean;
   userVoteId?: string;
   prediction?: FuturePrediction;
   status?: PollStatus;
@@ -93,9 +94,9 @@ export interface AppNotification {
   type: 'comment' | 'reply' | 'vote' | 'system' | 'mention';
   message: string;
   sender?: {
-      _id: string;
-      username: string;
-      avatarUrl: string;
+    _id: string;
+    username: string;
+    avatarUrl: string;
   };
   pollId?: string;
   read: boolean;
@@ -117,9 +118,26 @@ export interface Candidate {
   userId: string;
   user?: UserProfile; // Populated
   partyAffiliation: string;
-  manifesto: string; // "Reason for Contesting"
+  manifesto: string;
   background: string;
+  contactInfo: string;
+  reasonForContesting: string;
+  experience: string;
+  electionId?: string;
   aiProfile?: LeadershipProfile;
   status: 'pending_review' | 'approved' | 'rejected';
-  createdAt: Date;
+  createdAt: string;
+}
+
+export interface Election {
+  id: string;
+  title: string;
+  description: string;
+  startDate: string;
+  endDate: string;
+  status: 'upcoming' | 'active' | 'ended' | 'paused';
+  regions: string[];
+  candidates?: string[]; // IDs
+  createdBy: string;
+  createdAt: string;
 }

@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Poll, UserProfile, PollComment, ConsciousnessLayer, ConsciousnessResponse, FuturePrediction, AppNotification } from './types';
+import { Poll, UserProfile, PollComment, ConsciousnessLayer, ConsciousnessResponse, AppNotification } from './types';
 import PollCard from './src/components/PollCard';
 import ProfileView from './src/components/ProfileView';
 import CreatePoll from './src/components/CreatePoll';
@@ -9,160 +9,31 @@ import AuthModal from './src/components/AuthModal';
 import NotificationDropdown from './src/components/NotificationDropdown';
 import OnboardingModal from './src/components/OnboardingModal';
 import ElectionHub from './src/components/ElectionHub';
-import { generatePollInsight, predictFutureTrend } from './geminiService';
+import AdminElectionDashboard from './src/components/AdminElectionDashboard';
+import AdminElectionManager from './src/components/AdminElectionManager';
+import PollManagement from './src/components/PollManagement';
+import { generatePollInsight } from './geminiService';
 import { api } from './src/services/api';
 import {
     Home, User, PlusCircle, Activity, Globe, Menu,
     Hash, Bell, Bookmark, Settings, Search, Sparkles,
     LogOut, TrendingUp, Flame, Brain, AlertTriangle, Zap, LogIn, X,
-    PanelLeft, Info, ShieldCheck, Flag
+    PanelLeft, Info, ShieldCheck, Flag, Edit2
 } from 'lucide-react';
 
-// --- SEED DATA (Used for offline simulation) ---
-// Note: Updated status to 'approved' for visibility
-const SEED_POLLS: Poll[] = [
-    {
-        id: 'cp1',
-        mode: 'consciousness',
-        question: "How does the current state of the world make you feel?",
-        description: "Contribute your raw emotion to the collective mind cloud.",
-        category: 'Consciousness',
-        options: [],
-        consciousnessEntries: [
-            { id: 'ce1', text: 'Anxious', intensity: 80, layer: 'real', emoji: '😰', createdAt: new Date() },
-            { id: 'ce2', text: 'Hopeful', intensity: 40, layer: 'desired', emoji: '🌱', createdAt: new Date() },
-            { id: 'ce3', text: 'Numb', intensity: 90, layer: 'hidden', emoji: '😶', createdAt: new Date() },
-            { id: 'ce4', text: 'Electric', intensity: 75, layer: 'real', emoji: '⚡', createdAt: new Date() },
-            { id: 'ce5', text: 'Lost', intensity: 60, layer: 'hidden', emoji: '🌫️', createdAt: new Date() },
-        ],
-        totalVotes: 1205,
-        createdAt: new Date(),
-        authorId: 'system',
-        isHot: true,
-        comments: [],
-        status: 'approved'
-    },
-    {
-        id: 'sp1',
-        mode: 'standard',
-        question: "Is AI art real art?",
-        description: "The definition of creativity is evolving. Where do you stand?",
-        category: 'Tech',
-        options: [
-            { id: 'o1', text: 'Yes, the prompt is the brush.', votes: 450, archetypes: { 'Visionary': 120, 'Technologist': 300 } },
-            { id: 'o2', text: 'No, it lacks human soul.', votes: 320, archetypes: { 'Purist': 200, 'Humanist': 80 } },
-            { id: 'o3', text: 'It is a new medium entirely.', votes: 580, archetypes: { 'Realist': 300, 'Futurist': 250 } }
-        ],
-        totalVotes: 1350,
-        createdAt: new Date(),
-        authorId: 'system',
-        isHot: true,
-        comments: [
-            { id: 'c1', authorId: 'anon', authorName: 'PixelDaVinci', text: 'It is just a tool. The artist is still the human directing it.', createdAt: new Date(), likes: 24, replies: [] },
-            { id: 'c2', authorId: 'anon', authorName: 'ArtSoul', text: 'But where is the suffering? Art requires struggle.', createdAt: new Date(), likes: 15, replies: [] }
-        ],
-        status: 'approved'
-    },
-    {
-        id: 'ht1',
-        mode: 'standard',
-        question: "Pineapple on Pizza?",
-        description: "The eternal culinary conflict.",
-        category: 'Social',
-        options: [
-            { id: 'p1', text: 'Abomination', votes: 800, archetypes: { 'Traditionalist': 600 } },
-            { id: 'p2', text: 'Delicious', votes: 650, archetypes: { 'Rebel': 400, 'Chaos Agent': 200 } }
-        ],
-        totalVotes: 1450,
-        createdAt: new Date(),
-        authorId: 'system',
-        isHot: true, // Marked as hot take
-        comments: [],
-        status: 'approved'
-    },
-    {
-        id: 'sp2',
-        mode: 'standard',
-        question: "Would you upload your consciousness to the cloud if it meant immortality?",
-        description: "Leaving your biological body behind for eternal digital existence.",
-        category: 'Hypothetical',
-        options: [
-            { id: 'u1', text: 'In a heartbeat.', votes: 210, archetypes: { 'Futurist': 150 } },
-            { id: 'u2', text: 'Never. That is suicide.', votes: 480, archetypes: { 'Humanist': 300, 'Skeptic': 100 } },
-            { id: 'u3', text: 'Only if I can disconnect.', votes: 300, archetypes: { 'Strategist': 200 } }
-        ],
-        totalVotes: 990,
-        createdAt: new Date(),
-        authorId: 'system',
-        isHot: true,
-        comments: [],
-        status: 'approved'
-    },
-    {
-        id: 'ht2',
-        mode: 'standard',
-        question: "Is social media a net positive for humanity?",
-        description: "Connecting the world vs. destroying mental health.",
-        category: 'Social',
-        options: [
-            { id: 'sm1', text: 'Net Positive', votes: 400, archetypes: { 'Optimist': 300 } },
-            { id: 'sm2', text: 'Net Negative', votes: 420, archetypes: { 'Cynic': 300 } }
-        ],
-        totalVotes: 820,
-        createdAt: new Date(),
-        authorId: 'system',
-        isHot: true,
-        comments: [],
-        status: 'approved'
-    }
-];
+import { io } from 'socket.io-client';
 
-const generateSimulatedVotes = (polls: Poll[]) => {
-    return polls.map(poll => {
-        if (poll.mode === 'consciousness') {
-            if (Math.random() > 0.9 && poll.consciousnessEntries) {
-                const words = ['Tired', 'Wired', 'Lost', 'Found', 'Angry', 'Peace', 'Numb', 'Fire'];
-                const layers: ConsciousnessLayer[] = ['real', 'hidden', 'desired'];
-                const newEntry: ConsciousnessResponse = {
-                    id: `sim-${Date.now()}`,
-                    text: words[Math.floor(Math.random() * words.length)],
-                    intensity: Math.floor(Math.random() * 100),
-                    layer: layers[Math.floor(Math.random() * layers.length)],
-                    emoji: '🤖',
-                    createdAt: new Date()
-                };
-                const newEntries = [...(poll.consciousnessEntries || []), newEntry].slice(-40);
-                return { ...poll, consciousnessEntries: newEntries };
-            }
-            return poll;
-        }
-
-        if (Math.random() > 0.8 && poll.options?.length > 0) {
-            const randomOptionIdx = Math.floor(Math.random() * poll.options.length);
-            const newOptions = poll.options.map((opt, idx) => {
-                if (idx === randomOptionIdx) {
-                    const archetypes = opt.archetypes ? { ...opt.archetypes } : {};
-                    const type = ['Realist', 'Dreamer', 'Skeptic', 'Optimist'][Math.floor(Math.random() * 4)];
-                    archetypes[type] = (archetypes[type] || 0) + 1;
-                    return { ...opt, votes: opt.votes + 1, archetypes };
-                }
-                return opt;
-            });
-            return {
-                ...poll,
-                options: newOptions,
-                totalVotes: (poll.totalVotes || 0) + 1
-            };
-        }
-        return poll;
-    });
-};
+// Initialize Socket.io
+const socket = io(import.meta.env.MODE === "production" ? import.meta.env.VITE_APP_API_URL : "http://localhost:5000", {
+    withCredentials: true,
+    autoConnect: true
+});
 
 const GUEST_ACTION_LIMIT = 3;
 
 const App: React.FC = () => {
     // Added 'election' to view state
-    const [view, setView] = useState<'feed' | 'profile' | 'explore' | 'saved' | 'settings' | 'moderation' | 'election'>('feed');
+    const [view, setView] = useState<'feed' | 'profile' | 'explore' | 'saved' | 'settings' | 'moderation' | 'election' | 'manage'>('feed');
     const [showCreateModal, setShowCreateModal] = useState(false);
 
     // Auth State
@@ -194,6 +65,9 @@ const App: React.FC = () => {
     const [showNotifications, setShowNotifications] = useState(false);
     const [notifications, setNotifications] = useState<AppNotification[]>([]);
 
+    // Trending State
+    const [trendingTopics, setTrendingTopics] = useState<{ tag: string, count: number }[]>([]);
+
     // 1. INITIALIZE DATA & AUTH
     useEffect(() => {
         const init = async () => {
@@ -210,27 +84,25 @@ const App: React.FC = () => {
             }
 
             // C. Try to restore session
-            const token = localStorage.getItem('token');
-            if (token) {
-                try {
-                    const profile = await api.getProfile();
-                    setUser(profile);
-                } catch (e) {
-                    console.warn("Session restore failed (Backend might be offline):", e);
-                }
+            try {
+                const profile = await api.getProfile();
+                setUser(profile);
+            } catch (e) {
+                // No session or backend offline, user remains null
+                console.log("No active session found.");
             }
 
-            // D. Fetch Polls
+            // D. Fetch Polls & Trending
             try {
-                const serverPolls = await api.getPolls();
-                if (serverPolls && serverPolls.length > 0) {
-                    setPolls(serverPolls);
-                } else {
-                    setPolls(SEED_POLLS); // Fallback if DB empty
-                }
+                const [serverPolls, trending] = await Promise.all([
+                    api.getPolls(),
+                    api.getTrendingTopics()
+                ]);
+                setPolls(serverPolls);
+                setTrendingTopics(trending);
             } catch (e) {
-                console.warn("Backend unavailable. Running in offline simulation mode.");
-                setPolls(SEED_POLLS);
+                console.warn("Backend unavailable.");
+                setPolls([]);
             } finally {
                 setIsLoadingPolls(false);
             }
@@ -238,49 +110,26 @@ const App: React.FC = () => {
         init();
     }, []);
 
-    // Fetch Notifications when user logs in
+    // 2. SOCKET.IO EVENT LISTENERS
     useEffect(() => {
-        if (user) {
-            const fetchNotifs = async () => {
-                try {
-                    const data = await api.getNotifications();
-                    setNotifications(data);
-                } catch (e) {
-                    console.warn("Failed to fetch notifications");
+        socket.on('connect', () => {
+            console.log('Connected to socket server');
+        });
+
+        socket.on('vote_updated', (data: { pollId: string, optionId: string, newVoteCount: number, totalVotes: number }) => {
+            setPolls(current => current.map(p => {
+                if (p.id === data.pollId) {
+                    const newOptions = p.options?.map(o => o.id === data.optionId ? { ...o, votes: data.newVoteCount } : o) || [];
+                    return { ...p, options: newOptions, totalVotes: data.totalVotes };
                 }
-            };
-            fetchNotifs();
-            // Poll for notifications every minute
-            const interval = setInterval(fetchNotifs, 60000);
-            return () => clearInterval(interval);
-        } else {
-            setNotifications([]);
-        }
-    }, [user]);
+                return p;
+            }));
+        });
 
-    // Fetch Pending Polls when entering moderation view
-    useEffect(() => {
-        if (view === 'moderation' && user?.role === 'admin') {
-            const fetchPending = async () => {
-                try {
-                    const pending = await api.getPendingPolls();
-                    setPendingPolls(pending);
-                } catch (e) {
-                    console.error("Failed to fetch pending polls", e);
-                }
-            };
-            fetchPending();
-        }
-    }, [view, user]);
-
-    // 2. LIVE SIMULATION ENGINE
-    // Runs on top of real data to make the app feel alive
-    useEffect(() => {
-        const interval = setInterval(() => {
-            setPolls(currentPolls => generateSimulatedVotes(currentPolls));
-        }, 3000); // Slower interval for realism
-
-        return () => clearInterval(interval);
+        return () => {
+            socket.off('connect');
+            socket.off('vote_updated');
+        };
     }, []);
 
     // Notification Timer
@@ -375,7 +224,11 @@ const App: React.FC = () => {
 
     // --- ACTIONS ---
 
+    const [isVoting, setIsVoting] = useState(false);
+
     const handleVote = async (pollId: string, optionId: string) => {
+        if (isVoting) return;
+        setIsVoting(true);
         handleGuestAction(async () => {
             try {
                 // Optimistic UI Update
@@ -414,6 +267,8 @@ const App: React.FC = () => {
 
             } catch (e) {
                 console.error("Vote failed:", e);
+            } finally {
+                setIsVoting(false);
             }
         });
     };
@@ -566,7 +421,8 @@ const App: React.FC = () => {
     };
 
     const handleToggleSave = (pollId: string) => {
-        requireAuth(() => {
+        requireAuth(async () => {
+            // Optimistic Update
             setUser(prev => {
                 if (!prev) return null;
                 const currentSaved = prev.savedPollIds || [];
@@ -576,7 +432,25 @@ const App: React.FC = () => {
                     return { ...prev, savedPollIds: [...currentSaved, pollId] };
                 }
             });
-            // Note: Ideally persist this to backend User model
+
+            try {
+                const updatedIds = await api.toggleSavePoll(pollId);
+                // Confirm with backend state
+                setUser(prev => prev ? { ...prev, savedPollIds: updatedIds } : null);
+            } catch (e) {
+                console.error("Failed to save poll:", e);
+                // Revert if failed
+                setUser(prev => {
+                    if (!prev) return null;
+                    const currentSaved = prev.savedPollIds || [];
+                    // Invert the operation to revert
+                    if (currentSaved.includes(pollId)) {
+                        return { ...prev, savedPollIds: currentSaved.filter(id => id !== pollId) };
+                    } else {
+                        return { ...prev, savedPollIds: [...currentSaved, pollId] };
+                    }
+                });
+            }
         });
     };
 
@@ -584,16 +458,17 @@ const App: React.FC = () => {
         if (!user) return;
 
         try {
-            await api.createPoll({
+            const newPoll = await api.createPoll({
                 question: pollData.question,
                 category: pollData.category,
                 options: pollData.options,
-                mode: pollData.mode || 'standard', // Use passed mode
-                description: pollData.description || '', // Use passed description
+                mode: pollData.mode || 'standard',
+                description: pollData.description || '',
             });
 
             setShowCreateModal(false);
-            setNotification("Poll submitted for moderation.");
+            setPolls(prev => [newPoll, ...prev]);
+            setNotification("Poll created successfully!");
         } catch (e) {
             console.error("Create poll failed:", e);
             // Fallback for offline simulation only
@@ -645,33 +520,16 @@ const App: React.FC = () => {
         // Note: Add api.updateProfile call here in future
     };
 
-    const handleFuturePrediction = async (pollId: string): Promise<FuturePrediction> => {
-        let result: FuturePrediction = { predictionText: '', predictedOptions: [] };
-        if (!user) {
-            setShowAuthModal(true);
-            return result;
-        }
 
-        const poll = polls.find(p => p.id === pollId);
-        if (!poll || poll.prediction) return { predictionText: '', predictedOptions: [] };
 
+    const handleUpdateUser = async (updates: Partial<UserProfile>) => {
         try {
-            result = await predictFutureTrend(poll.question, poll.options || []);
-            setPolls(curr => curr.map(p => {
-                if (p.id === pollId) {
-                    return { ...p, prediction: result };
-                }
-                return p;
-            }));
-            return result;
-        } catch (e) {
-            console.error("Prediction failed", e);
-            return { predictionText: "The future is cloudy.", predictedOptions: [] };
+            const updatedUser = await api.updateProfile(updates);
+            setUser(updatedUser);
+        } catch (error) {
+            console.error("Failed to update profile:", error);
+            alert("Failed to save settings.");
         }
-    };
-
-    const handleUpdateUser = (updates: Partial<UserProfile>) => {
-        setUser(prev => prev ? ({ ...prev, ...updates }) : null);
     };
 
     // --- FILTERING LOGIC ---
@@ -882,6 +740,14 @@ const App: React.FC = () => {
                             <span className="text-base">Saved</span>
                         </button>
 
+                        <button
+                            onClick={() => handleViewChange('manage')}
+                            className={`flex items-center gap-4 w-full p-3 rounded-xl transition-all duration-200 group ${view === 'manage' ? 'bg-surface-200 text-white font-bold' : 'text-gray-400 hover:text-white hover:bg-surface-100'}`}
+                        >
+                            <Edit2 size={22} className={view === 'manage' ? 'text-neon-blue' : 'group-hover:text-neon-blue transition-colors'} />
+                            <span className="text-base">My Signals</span>
+                        </button>
+
                         {/* NEW ELECTION MODULE LINK */}
                         <button
                             onClick={() => handleViewChange('election')}
@@ -955,8 +821,13 @@ const App: React.FC = () => {
                             {view === 'feed' && (
                                 <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                                     {/* Trending Banner (Only show if not searching) */}
-                                    {!searchQuery && (
-                                        <div className="relative overflow-hidden rounded-2xl bg-surface-100 border border-surface-300 p-6 md:p-8 group hover:border-neon-blue/30 transition-all">
+                                    {/* Trending Banner (Only show if not searching) */}
+                                    {!searchQuery && getHotTakes().length > 0 && (
+                                        <div className="relative overflow-hidden rounded-2xl bg-surface-100 border border-surface-300 p-6 md:p-8 group hover:border-neon-blue/30 transition-all cursor-pointer" onClick={() => {
+                                            const topPoll = getHotTakes()[0];
+                                            // Scroll to poll or open it (for now just highlight)
+                                            document.getElementById(`poll-${topPoll.id}`)?.scrollIntoView({ behavior: 'smooth' });
+                                        }}>
                                             <div className="relative z-10">
                                                 <div className="flex items-center gap-2 mb-4">
                                                     <span className="inline-flex items-center gap-1 px-3 py-1 bg-neon-pink/10 text-neon-pink border border-neon-pink/20 rounded-full text-[10px] font-bold tracking-wider uppercase">
@@ -965,9 +836,11 @@ const App: React.FC = () => {
                                                     <span className="text-xs text-gray-400 font-mono">LIVE FEED</span>
                                                 </div>
                                                 <h2 className="text-2xl md:text-3xl font-display font-bold max-w-lg mb-2 leading-tight">
-                                                    Is society becoming more empathetic or more detached?
+                                                    {getHotTakes()[0].question}
                                                 </h2>
-                                                <p className="text-gray-400 text-sm">14,203 votes • <span className="text-neon-green">Trending now</span></p>
+                                                <p className="text-gray-400 text-sm">
+                                                    {getHotTakes()[0].totalVotes.toLocaleString()} votes • <span className="text-neon-green">Trending now</span>
+                                                </p>
                                             </div>
                                             {/* Abstract graphic */}
                                             <div className="absolute right-0 top-0 h-full w-1/3 bg-gradient-to-l from-neon-blue/10 to-transparent"></div>
@@ -1012,7 +885,7 @@ const App: React.FC = () => {
                                                     onReplyComment={handleReplyComment}
                                                     isSaved={user?.savedPollIds?.includes(poll.id)}
                                                     onToggleSave={handleToggleSave}
-                                                    onPredict={handleFuturePrediction}
+
                                                     onAddConsciousnessEntry={handleAddConsciousnessEntry}
                                                 />
                                             ))
@@ -1068,11 +941,17 @@ const App: React.FC = () => {
                                                     onAddComment={() => { }}
                                                     onVoteComment={() => { }}
                                                     onReplyComment={() => { }}
-                                                    onPredict={async () => ({ predictionText: '', predictedOptions: [] })}
+
                                                 />
                                             ))}
                                         </div>
                                     )}
+                                    <div className="border-t border-surface-300 pt-8 mt-8">
+                                        <AdminElectionManager />
+                                    </div>
+                                    <div className="border-t border-surface-300 pt-8 mt-8">
+                                        <AdminElectionDashboard />
+                                    </div>
                                 </div>
                             )}
 
@@ -1081,6 +960,13 @@ const App: React.FC = () => {
                                     user={user}
                                     voteHistory={voteHistory}
                                     onUpdateProfile={handleProfileUpdate}
+                                />
+                            )}
+
+                            {view === 'manage' && user && (
+                                <PollManagement
+                                    user={user}
+                                    onOpenCreate={handleOpenCreate}
                                 />
                             )}
 
@@ -1136,7 +1022,7 @@ const App: React.FC = () => {
                                                         onReplyComment={handleReplyComment}
                                                         isSaved={user?.savedPollIds?.includes(poll.id)}
                                                         onToggleSave={handleToggleSave}
-                                                        onPredict={handleFuturePrediction}
+
                                                         onAddConsciousnessEntry={handleAddConsciousnessEntry}
                                                     />
                                                 ))
@@ -1159,7 +1045,7 @@ const App: React.FC = () => {
                                                                 onReplyComment={handleReplyComment}
                                                                 isSaved={user?.savedPollIds?.includes(poll.id)}
                                                                 onToggleSave={handleToggleSave}
-                                                                onPredict={handleFuturePrediction}
+
                                                                 onAddConsciousnessEntry={handleAddConsciousnessEntry}
                                                             />
                                                         </div>
@@ -1206,7 +1092,7 @@ const App: React.FC = () => {
                                                 onReplyComment={handleReplyComment}
                                                 isSaved={true}
                                                 onToggleSave={handleToggleSave}
-                                                onPredict={handleFuturePrediction}
+
                                                 onAddConsciousnessEntry={handleAddConsciousnessEntry}
                                             />
                                         ))
@@ -1252,12 +1138,16 @@ const App: React.FC = () => {
                             <h3 className="font-display font-bold uppercase tracking-wider text-xs">Trending Topics</h3>
                         </div>
                         <div className="space-y-4">
-                            {['#AI_Rights', '#MarsColony', '#UniversalIncome', '#DigitalPrivacy', '#GeneticEditing'].map((tag, i) => (
-                                <div key={i} className="flex justify-between items-center group cursor-pointer" onClick={() => setSearchQuery(tag)}>
-                                    <span className="text-sm text-gray-300 group-hover:text-neon-blue transition-colors">{tag}</span>
-                                    <span className="text-xs text-gray-500">{Math.floor(Math.random() * 50) + 1}k</span>
-                                </div>
-                            ))}
+                            {trendingTopics.length === 0 ? (
+                                <p className="text-gray-500 text-xs">No trending data yet.</p>
+                            ) : (
+                                trendingTopics.map((topic, i) => (
+                                    <div key={i} className="flex justify-between items-center group cursor-pointer" onClick={() => setSearchQuery(topic.tag)}>
+                                        <span className="text-sm text-gray-300 group-hover:text-neon-blue transition-colors">{topic.tag}</span>
+                                        <span className="text-xs text-gray-500">{topic.count} polls</span>
+                                    </div>
+                                ))
+                            )}
                         </div>
                     </div>
 

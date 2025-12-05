@@ -5,17 +5,17 @@ import { Poll, GeneratedPersona, LeadershipProfile } from './types';
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
 
 export const generateUserPersona = async (votingHistory: { question: string; choice: string; category: string }[]): Promise<GeneratedPersona> => {
-  if (!process.env.API_KEY) {
-    console.warn("No API Key found. Returning mock persona.");
-    return {
-      title: "The Silent Observer",
-      description: "You are waiting for the right moment to speak. Add an API Key to unlock true insight.",
-      tags: ["#Mystery", "#Observer", "#Unanalyzed"],
-      archetype: "Neutral"
-    };
-  }
+    if (!process.env.API_KEY) {
+        console.warn("No API Key found. Returning mock persona.");
+        return {
+            title: "The Silent Observer",
+            description: "You are waiting for the right moment to speak. Add an API Key to unlock true insight.",
+            tags: ["#Mystery", "#Observer", "#Unanalyzed"],
+            archetype: "Neutral"
+        };
+    }
 
-  const prompt = `
+    const prompt = `
     Analyze the following voting history of a user on a social polling app.
     Based on their choices, construct a psychological persona profile.
     
@@ -29,38 +29,38 @@ export const generateUserPersona = async (votingHistory: { question: string; cho
     - archetype: One word summary (e.g., "Leader", "Rebel", "Analyst").
   `;
 
-  try {
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: prompt,
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            title: { type: Type.STRING },
-            description: { type: Type.STRING },
-            tags: { type: Type.ARRAY, items: { type: Type.STRING } },
-            archetype: { type: Type.STRING },
-          },
-          required: ["title", "description", "tags", "archetype"]
-        }
-      }
-    });
+    try {
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: {
+                    type: Type.OBJECT,
+                    properties: {
+                        title: { type: Type.STRING },
+                        description: { type: Type.STRING },
+                        tags: { type: Type.ARRAY, items: { type: Type.STRING } },
+                        archetype: { type: Type.STRING },
+                    },
+                    required: ["title", "description", "tags", "archetype"]
+                }
+            }
+        });
 
-    if (response.text) {
-      return JSON.parse(response.text) as GeneratedPersona;
+        if (response.text) {
+            return JSON.parse(response.text) as GeneratedPersona;
+        }
+        throw new Error("No response text");
+    } catch (error) {
+        console.error("Gemini Error:", error);
+        return {
+            title: "The Enigma",
+            description: "Your patterns are too complex for the current simulation. Or the AI is taking a nap.",
+            tags: ["#Complex", "#Error", "#Human"],
+            archetype: "Unknown"
+        };
     }
-    throw new Error("No response text");
-  } catch (error) {
-    console.error("Gemini Error:", error);
-    return {
-      title: "The Enigma",
-      description: "Your patterns are too complex for the current simulation. Or the AI is taking a nap.",
-      tags: ["#Complex", "#Error", "#Human"],
-      archetype: "Unknown"
-    };
-  }
 };
 
 export const generatePollInsight = async (pollQuestion: string, winningOption: string): Promise<string> => {
@@ -139,8 +139,10 @@ export const predictFutureTrend = async (question: string, options: { text: stri
 
 export const evaluateCandidate = async (
     username: string,
-    manifesto: string, 
+    manifesto: string,
     background: string,
+    reasonForContesting: string,
+    experience: string,
     activitySummary: string // Passed from backend or frontend
 ): Promise<LeadershipProfile> => {
     if (!process.env.API_KEY) {
@@ -158,6 +160,8 @@ export const evaluateCandidate = async (
         Candidate: ${username}
         Manifesto: "${manifesto}"
         Background: "${background}"
+        Reason for Contesting: "${reasonForContesting}"
+        Experience: "${experience}"
         Platform Activity Style: "${activitySummary}"
 
         Analyze their leadership potential.

@@ -3,6 +3,8 @@ import React, { useEffect, useState } from 'react';
 import { Candidate, UserProfile } from '../../types';
 import { api } from '../services/api';
 import CandidateApplication from './CandidateApplication';
+import CampaignSetup from './CampaignSetup';
+import CandidatePublicProfile from './CandidatePublicProfile';
 import { ShieldCheck, Users, Vote, Lock, AlertCircle, Clock } from 'lucide-react';
 
 interface ElectionHubProps {
@@ -14,6 +16,8 @@ const ElectionHub: React.FC<ElectionHubProps> = ({ user }) => {
     const [viewState, setViewState] = useState<'dashboard' | 'apply'>('dashboard');
     const [candidates, setCandidates] = useState<Candidate[]>([]);
     const [loading, setLoading] = useState(true);
+
+    const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
 
     useEffect(() => {
         if (user) {
@@ -77,33 +81,40 @@ const ElectionHub: React.FC<ElectionHubProps> = ({ user }) => {
                 {loading ? (
                     <div className="animate-pulse h-10 bg-surface-200 rounded"></div>
                 ) : myCandidacy ? (
-                    <div className="flex items-center justify-between bg-surface-200/50 p-4 rounded-lg border border-surface-300">
-                        <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 bg-surface-300 rounded-full flex items-center justify-center">
-                                <Users className="text-white" />
+                    <div className="space-y-4">
+                        <div className="flex items-center justify-between bg-surface-200/50 p-4 rounded-lg border border-surface-300">
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 bg-surface-300 rounded-full flex items-center justify-center">
+                                    <Users className="text-white" />
+                                </div>
+                                <div>
+                                    <h4 className="font-bold text-white">{myCandidacy.partyAffiliation || 'Independent'}</h4>
+                                    <p className="text-xs text-gray-400">Application Date: {new Date(myCandidacy.createdAt).toLocaleDateString()}</p>
+                                </div>
                             </div>
-                            <div>
-                                <h4 className="font-bold text-white">{myCandidacy.partyAffiliation || 'Independent'}</h4>
-                                <p className="text-xs text-gray-400">Application Date: {new Date(myCandidacy.createdAt).toLocaleDateString()}</p>
+                            <div className="flex items-center gap-2">
+                                {myCandidacy.status === 'pending_review' && (
+                                    <span className="px-3 py-1 bg-yellow-500/10 text-yellow-500 border border-yellow-500/30 rounded-full text-xs font-bold flex items-center gap-1">
+                                        <Clock size={12} /> Under Review
+                                    </span>
+                                )}
+                                {myCandidacy.status === 'approved' && (
+                                    <span className="px-3 py-1 bg-neon-green/10 text-neon-green border border-neon-green/30 rounded-full text-xs font-bold flex items-center gap-1">
+                                        <ShieldCheck size={12} /> Approved Candidate
+                                    </span>
+                                )}
+                                {myCandidacy.status === 'rejected' && (
+                                    <span className="px-3 py-1 bg-red-500/10 text-red-500 border border-red-500/30 rounded-full text-xs font-bold flex items-center gap-1">
+                                        <AlertCircle size={12} /> Application Rejected
+                                    </span>
+                                )}
                             </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                            {myCandidacy.status === 'pending_review' && (
-                                <span className="px-3 py-1 bg-yellow-500/10 text-yellow-500 border border-yellow-500/30 rounded-full text-xs font-bold flex items-center gap-1">
-                                    <Clock size={12} /> Under Review
-                                </span>
-                            )}
-                            {myCandidacy.status === 'approved' && (
-                                <span className="px-3 py-1 bg-neon-green/10 text-neon-green border border-neon-green/30 rounded-full text-xs font-bold flex items-center gap-1">
-                                    <ShieldCheck size={12} /> Approved Candidate
-                                </span>
-                            )}
-                            {myCandidacy.status === 'rejected' && (
-                                <span className="px-3 py-1 bg-red-500/10 text-red-500 border border-red-500/30 rounded-full text-xs font-bold flex items-center gap-1">
-                                    <AlertCircle size={12} /> Application Rejected
-                                </span>
-                            )}
-                        </div>
+
+                        {/* Campaign Setup Prompt */}
+                        {myCandidacy.status === 'approved' && !myCandidacy.electionId && (
+                            <CampaignSetup onSuccess={() => api.getMyCandidacy().then(setMyCandidacy)} />
+                        )}
                     </div>
                 ) : (
                     <div className="text-center py-6">
@@ -145,7 +156,10 @@ const ElectionHub: React.FC<ElectionHubProps> = ({ user }) => {
                                     <span className="text-[10px] uppercase tracking-wider text-gray-500 font-bold">Leadership Style</span>
                                     <p className="text-sm text-white font-mono">{cand.aiProfile?.leadershipStyle || 'Unknown'}</p>
                                 </div>
-                                <button className="w-full py-2 border border-surface-300 rounded-lg text-xs font-bold text-gray-300 hover:text-white hover:bg-surface-200 transition-colors">
+                                <button
+                                    onClick={() => setSelectedCandidate(cand)}
+                                    className="w-full py-2 border border-surface-300 rounded-lg text-xs font-bold text-gray-300 hover:text-white hover:bg-surface-200 transition-colors"
+                                >
                                     View Full Profile
                                 </button>
                             </div>
@@ -153,6 +167,14 @@ const ElectionHub: React.FC<ElectionHubProps> = ({ user }) => {
                     </div>
                 )}
             </div>
+
+            {/* Public Profile Modal */}
+            {selectedCandidate && (
+                <CandidatePublicProfile
+                    candidate={selectedCandidate}
+                    onClose={() => setSelectedCandidate(null)}
+                />
+            )}
         </div>
     );
 };

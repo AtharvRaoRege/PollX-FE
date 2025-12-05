@@ -1,13 +1,11 @@
 
 import { Poll, UserProfile, PollComment, ConsciousnessLayer, PollStatus, AppNotification, Candidate } from '../../types';
 
-const API_URL = import.meta.env.MODE === "production" ? import.meta.env.VITE_APP_API_URL : "http://localhost:4000/api";
+const API_URL = import.meta.env.MODE === "production" ? import.meta.env.VITE_APP_API_URL : "http://localhost:5000/api";
 
 const getHeaders = () => {
-  const token = localStorage.getItem('token');
   return {
     'Content-Type': 'application/json',
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
 };
 
@@ -25,10 +23,13 @@ export const api = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
+      credentials: 'include',
     });
-    if (!res.ok) throw new Error('Login failed');
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.message || 'Login failed');
+    }
     const data = await res.json();
-    localStorage.setItem('token', data.token);
     return mapId(data);
   },
 
@@ -37,29 +38,49 @@ export const api = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, email, password }),
+      credentials: 'include',
     });
-    if (!res.ok) throw new Error('Signup failed');
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.message || 'Signup failed');
+    }
     const data = await res.json();
-    localStorage.setItem('token', data.token);
     return mapId(data);
   },
 
   getProfile: async (): Promise<UserProfile> => {
     const res = await fetch(`${API_URL}/auth/profile`, {
       headers: getHeaders(),
+      credentials: 'include',
     });
     if (!res.ok) throw new Error('Failed to fetch profile');
     const data = await res.json();
     return mapId(data);
   },
 
-  logout: () => {
-    localStorage.removeItem('token');
+  updateProfile: async (updates: Partial<UserProfile>): Promise<UserProfile> => {
+    const res = await fetch(`${API_URL}/auth/profile`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(updates),
+      credentials: 'include',
+    });
+    if (!res.ok) throw new Error('Failed to update profile');
+    const data = await res.json();
+    return mapId(data);
+  },
+
+  logout: async () => {
+    await fetch(`${API_URL}/auth/logout`, {
+      method: 'POST',
+      credentials: 'include',
+    });
   },
 
   searchUsers: async (query: string): Promise<{ id: string, username: string, avatarUrl: string }[]> => {
     const res = await fetch(`${API_URL}/auth/search?search=${query}`, {
-      headers: getHeaders()
+      headers: getHeaders(),
+      credentials: 'include',
     });
     if (!res.ok) return [];
     const data = await res.json();
@@ -68,20 +89,21 @@ export const api = {
 
   // --- POLLS ---
   getPolls: async (): Promise<Poll[]> => {
-    const res = await fetch(`${API_URL}/polls`, { headers: getHeaders() });
+    const res = await fetch(`${API_URL}/polls`, { headers: getHeaders(), credentials: 'include' });
     if (!res.ok) throw new Error('Failed to fetch polls');
     const data = await res.json();
+    console.log('DEBUG: api.getPolls raw data:', data);
     return data.map((poll: any) => ({
       ...mapId(poll),
       options: poll.options?.map(mapId) || [],
-      comments: [],
+      comments: poll.comments?.map(mapId) || [],
       consciousnessEntries: poll.consciousnessEntries?.map(mapId) || []
     }));
   },
 
   // Admin: Get Pending
   getPendingPolls: async (): Promise<Poll[]> => {
-    const res = await fetch(`${API_URL}/polls/pending`, { headers: getHeaders() });
+    const res = await fetch(`${API_URL}/polls/pending`, { headers: getHeaders(), credentials: 'include' });
     if (!res.ok) throw new Error('Failed to fetch pending polls');
     const data = await res.json();
     return data.map((poll: any) => ({
@@ -92,12 +114,62 @@ export const api = {
     }));
   },
 
+  getTrendingTopics: async (): Promise<{ tag: string, count: number }[]> => {
+    const res = await fetch(`${API_URL}/polls/trending`, { headers: getHeaders(), credentials: 'include' });
+    if (!res.ok) return [];
+    return res.json();
+  },
+
+  getMyPolls: async (): Promise<Poll[]> => {
+    const res = await fetch(`${API_URL}/polls/me`, { headers: getHeaders(), credentials: 'include' });
+    if (!res.ok) throw new Error('Failed to fetch my polls');
+    const data = await res.json();
+    return data.map((poll: any) => ({
+      ...mapId(poll),
+      options: poll.options?.map(mapId) || [],
+      comments: poll.comments?.map(mapId) || [],
+      consciousnessEntries: poll.consciousnessEntries?.map(mapId) || []
+    }));
+  },
+
+  updatePoll: async (id: string, data: { question?: string; options?: string[] }) => {
+    const res = await fetch(`${API_URL}/polls/${id}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+      credentials: 'include',
+    });
+    if (!res.ok) throw new Error('Failed to update poll');
+    return mapId(await res.json());
+  },
+
+  deletePoll: async (id: string) => {
+    const res = await fetch(`${API_URL}/polls/${id}`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+      credentials: 'include',
+    });
+    if (!res.ok) throw new Error('Failed to delete poll');
+    return res.json();
+  },
+
+  toggleSavePoll: async (id: string) => {
+    const res = await fetch(`${API_URL}/auth/save/${id}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      credentials: 'include',
+    });
+    if (!res.ok) throw new Error('Failed to toggle save poll');
+    return res.json();
+  },
+
   // Admin: Update Status
   updatePollStatus: async (pollId: string, status: PollStatus): Promise<Poll> => {
     const res = await fetch(`${API_URL}/polls/${pollId}/status`, {
       method: 'PUT',
       headers: getHeaders(),
-      body: JSON.stringify({ status })
+      body: JSON.stringify({ status }),
+      credentials: 'include'
     });
     if (!res.ok) throw new Error('Failed to update status');
     const data = await res.json();
@@ -109,6 +181,7 @@ export const api = {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(pollData),
+      credentials: 'include',
     });
     if (!res.ok) throw new Error('Failed to create poll');
     const data = await res.json();
@@ -120,6 +193,7 @@ export const api = {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify({ optionId }),
+      credentials: 'include',
     });
     if (!res.ok) throw new Error('Vote failed');
     const data = await res.json();
@@ -131,6 +205,7 @@ export const api = {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(entry),
+      credentials: 'include',
     });
     if (!res.ok) throw new Error('Failed to add entry');
     const data = await res.json();
@@ -139,7 +214,7 @@ export const api = {
 
   // --- COMMENTS ---
   getComments: async (pollId: string): Promise<PollComment[]> => {
-    const res = await fetch(`${API_URL}/polls/${pollId}/comments`, { headers: getHeaders() });
+    const res = await fetch(`${API_URL}/polls/${pollId}/comments`, { headers: getHeaders(), credentials: 'include' });
     if (!res.ok) return [];
     const data = await res.json();
     return data.map(mapId);
@@ -149,7 +224,8 @@ export const api = {
     const res = await fetch(`${API_URL}/polls/${pollId}/comments`, {
       method: 'POST',
       headers: getHeaders(),
-      body: JSON.stringify({ text, parentId })
+      body: JSON.stringify({ text, parentId }),
+      credentials: 'include'
     });
     if (!res.ok) throw new Error('Failed to comment');
     const data = await res.json();
@@ -158,7 +234,7 @@ export const api = {
 
   // --- NOTIFICATIONS ---
   getNotifications: async (): Promise<AppNotification[]> => {
-    const res = await fetch(`${API_URL}/notifications`, { headers: getHeaders() });
+    const res = await fetch(`${API_URL}/notifications`, { headers: getHeaders(), credentials: 'include' });
     if (!res.ok) throw new Error('Failed to fetch notifications');
     const data = await res.json();
     return data.map(mapId);
@@ -167,14 +243,16 @@ export const api = {
   markNotificationRead: async (id: string): Promise<void> => {
     await fetch(`${API_URL}/notifications/${id}/read`, {
       method: 'PUT',
-      headers: getHeaders()
+      headers: getHeaders(),
+      credentials: 'include'
     });
   },
 
   markAllNotificationsRead: async (): Promise<void> => {
     await fetch(`${API_URL}/notifications/read-all`, {
       method: 'PUT',
-      headers: getHeaders()
+      headers: getHeaders(),
+      credentials: 'include'
     });
   },
 
@@ -183,7 +261,8 @@ export const api = {
     const res = await fetch(`${API_URL}/election/apply`, {
       method: 'POST',
       headers: getHeaders(),
-      body: JSON.stringify(application)
+      body: JSON.stringify(application),
+      credentials: 'include'
     });
     if (!res.ok) throw new Error('Application failed');
     const data = await res.json();
@@ -191,7 +270,7 @@ export const api = {
   },
 
   getMyCandidacy: async (): Promise<Candidate | null> => {
-    const res = await fetch(`${API_URL}/election/me`, { headers: getHeaders() });
+    const res = await fetch(`${API_URL}/election/me`, { headers: getHeaders(), credentials: 'include' });
     if (!res.ok) return null;
     const data = await res.json();
     if (!data) return null;
@@ -199,9 +278,78 @@ export const api = {
   },
 
   getCandidates: async (): Promise<Candidate[]> => {
-    const res = await fetch(`${API_URL}/election/candidates`, { headers: getHeaders() });
+    const res = await fetch(`${API_URL}/election/candidates`, { headers: getHeaders(), credentials: 'include' });
     if (!res.ok) throw new Error('Failed to fetch candidates');
     const data = await res.json();
     return data.map(mapId);
+  },
+
+  // Admin: Get All Candidates (including pending)
+  getAllCandidates: async (): Promise<Candidate[]> => {
+    const res = await fetch(`${API_URL}/election/all`, { headers: getHeaders(), credentials: 'include' });
+    if (!res.ok) throw new Error('Failed to fetch all candidates');
+    const data = await res.json();
+    return data.map(mapId);
+  },
+
+  // Admin: Update Candidate Status
+  updateCandidateStatus: async (id: string, status: 'approved' | 'rejected'): Promise<Candidate> => {
+    const res = await fetch(`${API_URL}/election/${id}/status`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify({ status }),
+      credentials: 'include'
+    });
+    if (!res.ok) throw new Error('Failed to update candidate status');
+    const data = await res.json();
+    return mapId(data);
+  },
+
+  // Module 3: Election Management
+  createElection: async (electionData: any): Promise<any> => {
+    const res = await fetch(`${API_URL}/election/create`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(electionData),
+      credentials: 'include'
+    });
+    if (!res.ok) throw new Error('Failed to create election');
+    const data = await res.json();
+    return mapId(data);
+  },
+
+  getElections: async (): Promise<any[]> => {
+    const res = await fetch(`${API_URL}/election/list`, { headers: getHeaders(), credentials: 'include' });
+    if (!res.ok) throw new Error('Failed to fetch elections');
+    const data = await res.json();
+    return data.map(mapId);
+  },
+
+  updateElectionStatus: async (id: string, status: string): Promise<any> => {
+    const res = await fetch(`${API_URL}/election/election/${id}/status`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify({ status }),
+      credentials: 'include'
+    });
+    if (!res.ok) throw new Error('Failed to update election status');
+    const data = await res.json();
+    return mapId(data);
+  },
+
+  // Module 2: Campaign Setup
+  joinElection: async (data: { electionId: string, symbol: string, promises: string[], keyIssues: string[] }): Promise<Candidate> => {
+    const res = await fetch(`${API_URL}/election/join`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+      credentials: 'include'
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || 'Failed to join election');
+    }
+    const dataRes = await res.json();
+    return mapId(dataRes);
   }
 };
