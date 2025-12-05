@@ -185,25 +185,25 @@ const ConsciousnessVisualizer: React.FC<ConsciousnessVisualizerProps> = ({ entri
 
       <canvas ref={canvasRef} className="block w-full h-[400px]" />
 
-      {/* Input Overlay */}
+    {/* Input Overlay */}
       {showInput && (
-        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-6 z-20 animate-in fade-in">
-           <form onSubmit={handleSubmit} className="w-full max-w-md bg-surface-100 border border-surface-300 p-6 rounded-2xl shadow-2xl relative overflow-hidden">
+        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6 z-20 animate-in fade-in">
+           <form onSubmit={handleSubmit} className="w-full max-w-md bg-surface-100 border border-surface-300 p-4 sm:p-6 rounded-2xl shadow-2xl relative overflow-hidden">
                 {/* Decoration */}
                 <div className="absolute top-0 right-0 w-32 h-32 bg-neon-blue/10 rounded-full blur-[40px] -translate-y-1/2 translate-x-1/2"></div>
 
-                <h3 className="text-xl font-display font-bold text-white mb-6 text-center">Contribute to the Cloud</h3>
+                <h3 className="text-lg sm:text-xl font-display font-bold text-white mb-4 sm:mb-6 text-center">Contribute to the Cloud</h3>
                 
                 {/* Layer Selector */}
-                <div className="flex justify-center gap-2 mb-6">
-                    <button type="button" onClick={() => setLayer('real')} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold border transition-all ${layer === 'real' ? 'bg-neon-blue/10 border-neon-blue text-neon-blue' : 'border-surface-300 text-gray-500 hover:text-white'}`}>
-                        <Eye size={14} /> Real Self
+                <div className="flex flex-wrap justify-center gap-2 mb-4 sm:mb-6">
+                    <button type="button" onClick={() => setLayer('real')} className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-2 rounded-lg text-xs font-bold border transition-all ${layer === 'real' ? 'bg-neon-blue/10 border-neon-blue text-neon-blue' : 'border-surface-300 text-gray-500 hover:text-white'}`}>
+                        <Eye size={14} /> <span className="hidden xs:inline">Real Self</span><span className="xs:hidden">Real</span>
                     </button>
-                    <button type="button" onClick={() => setLayer('hidden')} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold border transition-all ${layer === 'hidden' ? 'bg-neon-purple/10 border-neon-purple text-neon-purple' : 'border-surface-300 text-gray-500 hover:text-white'}`}>
-                        <EyeOff size={14} /> Hidden Self
+                    <button type="button" onClick={() => setLayer('hidden')} className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-2 rounded-lg text-xs font-bold border transition-all ${layer === 'hidden' ? 'bg-neon-purple/10 border-neon-purple text-neon-purple' : 'border-surface-300 text-gray-500 hover:text-white'}`}>
+                        <EyeOff size={14} /> <span className="hidden xs:inline">Hidden Self</span><span className="xs:hidden">Hidden</span>
                     </button>
-                    <button type="button" onClick={() => setLayer('desired')} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold border transition-all ${layer === 'desired' ? 'bg-neon-green/10 border-neon-green text-neon-green' : 'border-surface-300 text-gray-500 hover:text-white'}`}>
-                        <Star size={14} /> Desired Self
+                    <button type="button" onClick={() => setLayer('desired')} className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-2 rounded-lg text-xs font-bold border transition-all ${layer === 'desired' ? 'bg-neon-green/10 border-neon-green text-neon-green' : 'border-surface-300 text-gray-500 hover:text-white'}`}>
+                        <Star size={14} /> <span className="hidden xs:inline">Desired Self</span><span className="xs:hidden">Desired</span>
                     </button>
                 </div>
 
@@ -216,12 +216,12 @@ const ConsciousnessVisualizer: React.FC<ConsciousnessVisualizerProps> = ({ entri
                         onChange={e => setText(e.target.value)} 
                         maxLength={20}
                         placeholder="e.g. Hopeful, Drowning, Electric"
-                        className="w-full bg-surface-50 border border-surface-300 rounded-lg p-3 text-white focus:border-neon-purple focus:outline-none transition-colors"
+                        className="w-full bg-surface-50 border border-surface-300 rounded-lg p-3 text-sm sm:text-base text-white focus:border-neon-purple focus:outline-none transition-colors"
                     />
                 </div>
 
                 {/* Intensity Slider */}
-                <div className="mb-6">
+                <div className="mb-4 sm:mb-6">
                     <div className="flex justify-between text-xs text-gray-400 font-mono uppercase mb-2">
                         <span>Intensity</span>
                         <span>{intensity}%</span>
@@ -237,7 +237,7 @@ const ConsciousnessVisualizer: React.FC<ConsciousnessVisualizerProps> = ({ entri
                 </div>
                 
                 {/* Submit */}
-                <button type="submit" disabled={!text.trim()} className="w-full py-3 bg-white text-black font-bold rounded-xl hover:bg-neon-purple hover:text-white transition-all disabled:opacity-50 flex items-center justify-center gap-2">
+                <button type="submit" disabled={!text.trim()} className="w-full py-3 bg-white text-black text-sm sm:text-base font-bold rounded-xl hover:bg-neon-purple hover:text-white transition-all disabled:opacity-50 flex items-center justify-center gap-2">
                     <Send size={16} /> Broadcast Emotion
                 </button>
            </form>

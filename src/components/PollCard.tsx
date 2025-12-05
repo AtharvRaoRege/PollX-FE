@@ -279,77 +279,77 @@ const PollCard: React.FC<PollCardProps> = ({
     );
   };
 
-  // --- RENDER FOR CONSCIOUSNESS MODE ---
-  if (poll.mode === 'consciousness') {
-    return (
-        <div className={`bg-black border ${isAdminView ? 'border-yellow-500' : 'border-neon-purple/50'} rounded-xl p-6 mb-6 relative overflow-hidden group shadow-[0_0_30px_rgba(188,19,254,0.1)] hover:scale-[1.02] transition-all duration-500`}>
-            {isAdminView && <div className="absolute inset-0 border-2 border-yellow-500 pointer-events-none rounded-xl z-40"></div>}
-            <AdminControls />
-            <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 pointer-events-none"></div>
-            
-            <div className="flex justify-between items-start mb-4 relative z-10">
-                <span className="px-2 py-1 bg-neon-purple/20 text-xs font-mono tracking-widest uppercase text-neon-purple rounded border border-neon-purple/30">
-                Collective Consciousness
-                </span>
-                <span className="flex items-center text-neon-blue text-xs font-bold animate-pulse">
-                    <Activity size={12} className="mr-1" />
-                    LIVE SIGNAL
-                </span>
-            </div>
+ // --- RENDER FOR CONSCIOUSNESS MODE ---
+if (poll.mode === 'consciousness') {
+  return (
+      <div className={`bg-black border ${isAdminView ? 'border-yellow-500' : 'border-neon-purple/50'} rounded-xl p-4 sm:p-6 mb-6 relative overflow-hidden group shadow-[0_0_30px_rgba(188,19,254,0.1)] hover:scale-[1.02] transition-all duration-500`}>
+          {isAdminView && <div className="absolute inset-0 border-2 border-yellow-500 pointer-events-none rounded-xl z-40"></div>}
+          <AdminControls />
+          <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 pointer-events-none"></div>
+          
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0 mb-4 relative z-10">
+              <span className="px-2 py-1 bg-neon-purple/20 text-xs font-mono tracking-widest uppercase text-neon-purple rounded border border-neon-purple/30">
+              Collective Consciousness
+              </span>
+              <span className="flex items-center text-neon-blue text-xs font-bold animate-pulse">
+                  <Activity size={12} className="mr-1" />
+                  LIVE SIGNAL
+              </span>
+          </div>
 
-            <h3 className="text-2xl md:text-3xl font-display font-bold text-white mb-2 leading-tight relative z-10 text-center">
-                {poll.question}
-            </h3>
-            {poll.description && (
-                <p className="text-gray-400 text-sm mb-6 text-center relative z-10">{poll.description}</p>
-            )}
+          <h3 className="text-xl sm:text-2xl md:text-3xl font-display font-bold text-white mb-2 leading-tight relative z-10 text-center px-2">
+              {poll.question}
+          </h3>
+          {poll.description && (
+              <p className="text-gray-400 text-sm mb-6 text-center relative z-10 px-2">{poll.description}</p>
+          )}
 
-            <div className="mb-6 relative z-10">
-                <ConsciousnessVisualizer 
-                    entries={poll.consciousnessEntries || []}
-                    onAddEntry={(text, intensity, layer, emoji) => onAddConsciousnessEntry && onAddConsciousnessEntry(poll.id, text, intensity, layer, emoji)}
-                    userHasContributed={!!poll.userVoteId}
-                />
-            </div>
+          <div className="mb-6 relative z-10">
+              <ConsciousnessVisualizer 
+                  entries={poll.consciousnessEntries || []}
+                  onAddEntry={(text, intensity, layer, emoji) => onAddConsciousnessEntry && onAddConsciousnessEntry(poll.id, text, intensity, layer, emoji)}
+                  userHasContributed={!!poll.userVoteId}
+              />
+          </div>
 
-            <div className="flex justify-between items-center text-gray-500 text-sm border-t border-surface-800 pt-4 relative z-10">
-                <span className="font-mono text-xs">{(poll.consciousnessEntries?.length || 0)} minds connected</span>
-                <div className="flex space-x-4">
-                     <button 
-                        onClick={() => setShowComments(!showComments)}
-                        className={`flex items-center gap-1 transition-colors ${showComments ? 'text-neon-purple' : 'hover:text-white'}`}
-                    >
-                        <MessageCircle size={18} />
-                    </button>
-                    <button className="hover:text-white transition-colors"><Share2 size={18} /></button>
-                </div>
-            </div>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0 text-gray-500 text-sm border-t border-surface-800 pt-4 relative z-10">
+              <span className="font-mono text-xs">{(poll.consciousnessEntries?.length || 0)} minds connected</span>
+              <div className="flex space-x-4">
+                   <button 
+                      onClick={() => setShowComments(!showComments)}
+                      className={`flex items-center gap-1 transition-colors ${showComments ? 'text-neon-purple' : 'hover:text-white'}`}
+                  >
+                      <MessageCircle size={18} />
+                  </button>
+                  <button className="hover:text-white transition-colors"><Share2 size={18} /></button>
+              </div>
+          </div>
 
-             {/* Comments Section (Duplicate logic from standard poll) */}
-             {showComments && (
-                <div className="mt-6 border-t border-surface-800 pt-4 animate-slide-up relative z-10">
-                     <div className="max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
-                        {poll.comments.length === 0 ? (
-                            <p className="text-center text-gray-600 text-xs italic">The collective is silent.</p>
-                        ) : (
-                            <div className="space-y-1">
-                                {poll.comments.map(comment => (
-                                    <CommentItem 
-                                        key={comment.id} 
-                                        comment={comment} 
-                                        pollId={poll.id} 
-                                        onVote={onVoteComment} 
-                                        onReply={onReplyComment}
-                                    />
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                </div>
-             )}
-        </div>
-    );
-  }
+           {/* Comments Section (Duplicate logic from standard poll) */}
+           {showComments && (
+              <div className="mt-6 border-t border-surface-800 pt-4 animate-slide-up relative z-10">
+                   <div className="max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                      {poll.comments.length === 0 ? (
+                          <p className="text-center text-gray-600 text-xs italic">The collective is silent.</p>
+                      ) : (
+                          <div className="space-y-1">
+                              {poll.comments.map(comment => (
+                                  <CommentItem 
+                                      key={comment.id} 
+                                      comment={comment} 
+                                      pollId={poll.id} 
+                                      onVote={onVoteComment} 
+                                      onReply={onReplyComment}
+                                  />
+                              ))}
+                          </div>
+                      )}
+                  </div>
+              </div>
+           )}
+      </div>
+  );
+}
 
   // --- RENDER FOR STANDARD MODE ---
   return (
