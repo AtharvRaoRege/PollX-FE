@@ -1,6 +1,6 @@
 
 import React, { useRef, useEffect, useState } from 'react';
-import { ConsciousnessResponse, ConsciousnessLayer } from '../types';
+import { ConsciousnessResponse, ConsciousnessLayer } from '../../types';
 import { Sparkles, Eye, EyeOff, Star, Send, X } from 'lucide-react';
 
 interface ConsciousnessVisualizerProps {
