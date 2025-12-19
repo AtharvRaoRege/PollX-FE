@@ -447,7 +447,7 @@ const PollCard: React.FC<PollCardProps> = ({
           <div className="grid grid-cols-1 gap-3">
             {poll.options?.map((option, idx) => (
               <button
-                key={option.id}
+                key={option.id || `opt-${idx}`}
                 onClick={() => handleVote(option.id)}
                 className="w-full text-left p-4 rounded-lg border border-surface-300 hover:bg-surface-200 transition-all duration-300 group/btn relative overflow-hidden"
                 style={{

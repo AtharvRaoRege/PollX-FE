@@ -128,101 +128,21 @@ const SettingsView: React.FC<SettingsViewProps> = ({ user, onUpdateUser, onLogou
           </div>
         </div>
 
-        {/* VISUAL CORTEX */}
-        <div className="bg-surface-100 border border-surface-300 rounded-2xl p-6 relative overflow-hidden group hover:border-neon-green/30 transition-colors">
-          <div className="flex items-center gap-2 mb-6 text-neon-green">
-            <Zap size={20} />
-            <h3 className="font-bold uppercase tracking-widest text-sm">Visual Cortex</h3>
-          </div>
-
-          <div className="space-y-6">
-            <div>
-              <div className="flex justify-between mb-2">
-                <label className="text-sm font-medium text-white">Neon Intensity</label>
-                <span className="text-xs text-neon-green font-mono">{settings.neonIntensity}%</span>
-              </div>
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={settings.neonIntensity}
-                onChange={(e) => handleSettingChange('neonIntensity', parseInt(e.target.value))}
-                className="w-full h-2 bg-surface-300 rounded-lg appearance-none cursor-pointer accent-neon-green"
-              />
-              {/* Visual Preview */}
-              <div
-                className="mt-4 h-8 rounded bg-surface-900 border border-neon-green/50 flex items-center justify-center transition-all duration-300"
-                style={{ boxShadow: `0 0 ${settings.neonIntensity / 2}px rgba(10, 255, 0, ${settings.neonIntensity / 100})` }}
-              >
-                <span className="text-[10px] text-neon-green font-mono">RENDER PREVIEW</span>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-white font-medium">Reduced Motion</p>
-                <p className="text-xs text-gray-500 mt-1">Minimize UI animations and particles.</p>
-              </div>
-              <button
-                onClick={() => handleSettingChange('reduceMotion', !settings.reduceMotion)}
-                className={`w-12 h-6 rounded-full relative transition-colors duration-300 ${settings.reduceMotion ? 'bg-neon-green' : 'bg-surface-300'}`}
-              >
-                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all duration-300 ${settings.reduceMotion ? 'left-7' : 'left-1'}`}></div>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* NOTIFICATIONS */}
-        <div className="bg-surface-100 border border-surface-300 rounded-2xl p-6 relative overflow-hidden group hover:border-neon-pink/30 transition-colors">
-          <div className="flex items-center gap-2 mb-6 text-neon-pink">
-            <Bell size={20} />
-            <h3 className="font-bold uppercase tracking-widest text-sm">Neural Link</h3>
-          </div>
-
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-white font-medium">Push Notifications</p>
-                <p className="text-xs text-gray-500 mt-1">Receive alerts for trending polls.</p>
-              </div>
-              <button
-                onClick={() => handleSettingChange('notifications', !settings.notifications)}
-                className={`w-12 h-6 rounded-full relative transition-colors duration-300 ${settings.notifications ? 'bg-neon-pink' : 'bg-surface-300'}`}
-              >
-                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all duration-300 ${settings.notifications ? 'left-7' : 'left-1'}`}></div>
-              </button>
-            </div>
-
-            <div className="pt-4 border-t border-surface-300">
-              <button
-                onClick={() => {
-                  if (confirm("Are you sure? This will reset your AI-generated identity profile.")) {
-                    onUpdateUser({
-                      tags: [],
-                      identityTitle: 'The Unanalyzed',
-                      identityDescription: 'Data insufficient for analysis.'
-                    });
-                  }
-                }}
-                className="text-xs text-red-500 hover:text-red-400 flex items-center gap-2 transition-colors"
-              >
-                <Trash2 size={14} /> Purge Identity Data
-              </button>
-            </div>
-          </div>
-        </div>
-
       </div>
 
       {/* Save Action */}
-      <div className="fixed bottom-6 right-6 md:absolute md:bottom-auto md:right-0 md:mt-8 flex justify-end">
+      <div className="mt-8 flex justify-end pb-20 md:pb-0">
         <button
           onClick={handleSave}
-          className={`flex items-center gap-2 px-8 py-3 rounded-xl font-bold transition-all shadow-xl ${isSaved
+          className={`
+            fixed bottom-6 right-6 z-50 shadow-2xl
+            md:static md:shadow-none md:transform-none
+            flex items-center gap-2 px-8 py-3 rounded-xl font-bold transition-all
+            ${isSaved
               ? 'bg-neon-green text-black scale-105'
               : 'bg-white text-black hover:bg-neon-blue hover:scale-105'
-            }`}
+            }
+          `}
         >
           {isSaved ? <CheckCircle size={20} /> : <Save size={20} />}
           {isSaved ? 'CONFIGURATION SAVED' : 'SAVE CHANGES'}

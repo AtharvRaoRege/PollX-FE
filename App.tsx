@@ -66,7 +66,12 @@ const App: React.FC = () => {
     const [notifications, setNotifications] = useState<AppNotification[]>([]);
 
     // Trending State
+    const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
+    const [collectiveMood, setCollectiveMood] = useState<{ percentage: number; sentiment: string; summary: string } | null>(null);
     const [trendingTopics, setTrendingTopics] = useState<{ tag: string, count: number }[]>([]);
+    
+    // Feed Filter State
+    const [feedFilter, setFeedFilter] = useState<'hot' | 'new'>('new'); // Default to 'New' as requested by "Live Feed" implication
 
     // 1. INITIALIZE DATA & AUTH
     useEffect(() => {
@@ -89,7 +94,7 @@ const App: React.FC = () => {
                 setUser(profile);
             } catch (e) {
                 // No session or backend offline, user remains null
-                console.log("No active session found.");
+                console.error("Session restoration failed:", e);
             }
 
             // D. Fetch Polls & Trending
@@ -230,6 +235,10 @@ const App: React.FC = () => {
         if (isVoting) return;
         setIsVoting(true);
         handleGuestAction(async () => {
+            // CAPTURE PREVIOUS STATE
+            const previousPolls = [...polls];
+            // Also capture user state if needed, though for vote count generic revert is usually enough
+            
             try {
                 // Optimistic UI Update
                 setPolls(current => current.map(p => {
@@ -258,7 +267,11 @@ const App: React.FC = () => {
                         // Update User stats locally (backend handles real stats)
                         setUser(prev => prev ? ({ ...prev, votesCast: prev.votesCast + 1, xp: prev.xp + 50 }) : null);
                     } catch (err) {
-                        console.warn("API vote failed, keeping optimistic state");
+                        console.warn("API vote failed, reverting optimistic state");
+                        // ROLLBACK
+                        setPolls(previousPolls);
+                        setNotification("Vote failed. Please try again.");
+                        throw err; // Re-throw to hit outer catch if needed, or just handle here
                     }
                 } else {
                     // Guest vote - don't hit backend protected route, just keep local state
@@ -267,6 +280,8 @@ const App: React.FC = () => {
 
             } catch (e) {
                 console.error("Vote failed:", e);
+                // Ensure rollback happens if it wasn't caught in the inner block
+                setPolls(previousPolls);
             } finally {
                 setIsVoting(false);
             }
@@ -543,6 +558,14 @@ const App: React.FC = () => {
         const matchesOptions = poll.options?.some(opt => opt.text.toLowerCase().includes(lowerQuery));
 
         return matchesQuestion || matchesDescription || matchesCategory || matchesOptions;
+    }).sort((a, b) => {
+        if (feedFilter === 'hot') {
+            // Sort by total votes (highest first)
+            return (b.totalVotes || 0) - (a.totalVotes || 0);
+        } else {
+            // Sort by creation time (newest first)
+            return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        }
     });
 
     const getHotTakes = () => {
@@ -856,8 +879,18 @@ const App: React.FC = () => {
                                                 Live Feed
                                             </h3>
                                             <div className="flex gap-2">
-                                                <button className="px-4 py-1.5 rounded-full bg-surface-200 text-white text-xs font-bold hover:bg-surface-300 transition-colors">Hot</button>
-                                                <button className="px-4 py-1.5 rounded-full text-gray-500 hover:text-white hover:bg-surface-100 text-xs font-bold transition-colors">New</button>
+                                                <button 
+                                                    onClick={() => setFeedFilter('hot')}
+                                                    className={`px-4 py-1.5 rounded-full text-xs font-bold transition-colors ${feedFilter === 'hot' ? 'bg-surface-200 text-white' : 'text-gray-500 hover:text-white hover:bg-surface-100'}`}
+                                                >
+                                                    Hot
+                                                </button>
+                                                <button 
+                                                    onClick={() => setFeedFilter('new')}
+                                                    className={`px-4 py-1.5 rounded-full text-xs font-bold transition-colors ${feedFilter === 'new' ? 'bg-surface-200 text-white' : 'text-gray-500 hover:text-white hover:bg-surface-100'}`}
+                                                >
+                                                    New
+                                                </button>
                                             </div>
                                         </div>
                                     )}
@@ -1122,11 +1155,14 @@ const App: React.FC = () => {
                                     <span>Hopeful</span>
                                 </div>
                                 <div className="h-2 bg-surface-300 rounded-full overflow-hidden">
-                                    <div className="h-full bg-gradient-to-r from-neon-purple to-neon-blue w-[72%]"></div>
+                                    <div 
+                                        className="h-full bg-gradient-to-r from-neon-purple to-neon-blue transition-all duration-1000" 
+                                        style={{ width: `${collectiveMood ? collectiveMood.percentage : 50}%` }}
+                                    ></div>
                                 </div>
                             </div>
                             <p className="text-xs text-gray-500 leading-relaxed">
-                                Global sentiment analysis indicates a 12% rise in technological optimism today.
+                                {collectiveMood ? collectiveMood.summary : "Calibrating global sentiment sensors..."}
                             </p>
                         </div>
                     </div>
