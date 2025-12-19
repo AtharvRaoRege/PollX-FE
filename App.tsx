@@ -823,9 +823,9 @@ const App: React.FC = () => {
                             </div>
                         ) : (
                             <div className="bg-surface-100 p-4 rounded-xl border border-surface-300 text-center">
-                                <p className="text-xs text-gray-400 mb-3">Join the collective consciousness.</p>
+                                <p className="text-xs text-gray-400 mb-3">Join the conversation.</p>
                                 <button onClick={() => setShowAuthModal(true)} className="w-full py-2 bg-surface-200 hover:bg-white hover:text-black rounded-lg text-xs font-bold uppercase transition-colors">
-                                    Initialize
+                                    Get Started
                                 </button>
                             </div>
                         )}
@@ -854,9 +854,9 @@ const App: React.FC = () => {
                                             <div className="relative z-10">
                                                 <div className="flex items-center gap-2 mb-4">
                                                     <span className="inline-flex items-center gap-1 px-3 py-1 bg-neon-pink/10 text-neon-pink border border-neon-pink/20 rounded-full text-[10px] font-bold tracking-wider uppercase">
-                                                        <Flame size={12} fill="currentColor" /> Global Consensus
+                                                        <Flame size={12} fill="currentColor" /> Top Trend
                                                     </span>
-                                                    <span className="text-xs text-gray-400 font-mono">LIVE FEED</span>
+                                                    <span className="text-xs text-gray-400 font-mono">LIVE</span>
                                                 </div>
                                                 <h2 className="text-2xl md:text-3xl font-display font-bold max-w-lg mb-2 leading-tight">
                                                     {getHotTakes()[0].question}
@@ -927,16 +927,16 @@ const App: React.FC = () => {
                                                 <div className="w-16 h-16 bg-surface-200 rounded-full flex items-center justify-center mb-4">
                                                     <Search className="w-8 h-8 text-gray-500" />
                                                 </div>
-                                                <h3 className="text-lg font-bold text-white mb-2">Data Void Detected</h3>
+                                                <h3 className="text-lg font-bold text-white mb-2">No Polls Found</h3>
                                                 <p className="text-gray-400 text-sm text-center max-w-xs">
-                                                    No collective thoughts match your query.
-                                                    <br />Be the first to broadcast this topic.
+                                                    We couldn't find any polls matching your search.
+                                                    <br />Be the first to start this topic.
                                                 </p>
                                                 <button
                                                     onClick={handleOpenCreate}
                                                     className="mt-6 text-neon-blue hover:text-white font-bold text-xs uppercase tracking-wider transition-colors"
                                                 >
-                                                    + Create New Signal
+                                                    + Create New Poll
                                                 </button>
                                             </div>
                                         )}
@@ -1012,10 +1012,10 @@ const App: React.FC = () => {
                                             <div className="relative z-10">
                                                 <h2 className="text-3xl font-display font-bold mb-2 flex items-center gap-3">
                                                     <Sparkles className="text-neon-pink" />
-                                                    <span>Explore Dimensions</span>
+                                                    <span>Explore Topics</span>
                                                 </h2>
                                                 <p className="text-gray-400 max-w-lg">
-                                                    Discover new perspectives and trending anomalies in the collective data stream.
+                                                    Discover new perspectives and trending topics.
                                                 </p>
                                             </div>
                                         </div>

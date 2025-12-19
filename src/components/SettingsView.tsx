@@ -41,15 +41,15 @@ const SettingsView: React.FC<SettingsViewProps> = ({ user, onUpdateUser, onLogou
         <div>
           <h2 className="text-3xl font-display font-bold text-white mb-2 flex items-center gap-3">
             <RefreshCw className={`text-neon-blue ${isSaved ? 'animate-spin' : ''}`} />
-            System Configuration
+            Settings
           </h2>
-          <p className="text-gray-400">Calibrate your identity parameters and interface experience.</p>
+          <p className="text-gray-400">Manage your account and preferences.</p>
         </div>
         <button
           onClick={onLogout}
           className="flex items-center gap-2 px-4 py-2 bg-red-500/10 border border-red-500/30 text-red-500 rounded-lg hover:bg-red-500 hover:text-white transition-all text-sm font-bold uppercase tracking-wider"
         >
-          <LogOut size={16} /> Terminate
+          <LogOut size={16} /> Log Out
         </button>
       </div>
 
@@ -59,12 +59,12 @@ const SettingsView: React.FC<SettingsViewProps> = ({ user, onUpdateUser, onLogou
         <div className="bg-surface-100 border border-surface-300 rounded-2xl p-6 relative overflow-hidden group hover:border-neon-blue/30 transition-colors">
           <div className="flex items-center gap-2 mb-6 text-neon-blue">
             <Monitor size={20} />
-            <h3 className="font-bold uppercase tracking-widest text-sm">Identity Protocol</h3>
+            <h3 className="font-bold uppercase tracking-widest text-sm">Profile</h3>
           </div>
 
           <div className="space-y-6">
             <div>
-              <label className="block text-xs font-mono text-gray-500 mb-2 uppercase">Public Alias</label>
+              <label className="block text-xs font-mono text-gray-500 mb-2 uppercase">Username</label>
               <input
                 type="text"
                 value={username}
@@ -74,7 +74,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ user, onUpdateUser, onLogou
             </div>
 
             <div>
-              <label className="block text-xs font-mono text-gray-500 mb-2 uppercase">Avatar Source URL</label>
+              <label className="block text-xs font-mono text-gray-500 mb-2 uppercase">Profile Picture URL</label>
               <div className="flex gap-4">
                 <div className="w-12 h-12 rounded-full bg-surface-200 border-2 border-surface-300 overflow-hidden shrink-0">
                   <img src={avatarUrl} alt="Preview" className="w-full h-full object-cover" />
@@ -94,14 +94,14 @@ const SettingsView: React.FC<SettingsViewProps> = ({ user, onUpdateUser, onLogou
         <div className="bg-surface-100 border border-surface-300 rounded-2xl p-6 relative overflow-hidden group hover:border-neon-purple/30 transition-colors">
           <div className="flex items-center gap-2 mb-6 text-neon-purple">
             <Shield size={20} />
-            <h3 className="font-bold uppercase tracking-widest text-sm">Privacy Shield</h3>
+            <h3 className="font-bold uppercase tracking-widest text-sm">Privacy</h3>
           </div>
 
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-white font-medium flex items-center gap-2">
-                  Ghost Mode <span className="text-[10px] bg-surface-200 text-gray-400 px-1.5 py-0.5 rounded border border-surface-400">BETA</span>
+                  Incognito Mode <span className="text-[10px] bg-surface-200 text-gray-400 px-1.5 py-0.5 rounded border border-surface-400">BETA</span>
                 </p>
                 <p className="text-xs text-gray-500 mt-1">Hide active status and voting timestamps.</p>
               </div>
@@ -145,7 +145,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ user, onUpdateUser, onLogou
           `}
         >
           {isSaved ? <CheckCircle size={20} /> : <Save size={20} />}
-          {isSaved ? 'CONFIGURATION SAVED' : 'SAVE CHANGES'}
+          {isSaved ? 'SAVED' : 'SAVE CHANGES'}
         </button>
       </div>
     </div>
