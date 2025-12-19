@@ -76,6 +76,7 @@ export interface UserProfile {
   identityDescription: string;
   tags: string[];
   votesCast: number;
+  badges?: string[];
   avatarUrl: string;
   savedPollIds: string[];
   settings: UserSettings;

@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { UserProfile, UserSettings } from '../types';
+import { UserProfile, UserSettings } from '../../types';
 import {
   Shield, Eye, EyeOff, Zap, Bell, Monitor,
   Save, RefreshCw, Trash2, Smartphone, CheckCircle, LogOut

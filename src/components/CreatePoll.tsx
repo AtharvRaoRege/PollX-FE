@@ -1,19 +1,31 @@
 
 import React, { useState } from 'react';
 import { Poll, PollMode } from '../../types';
-import { Plus, X, Brain, List } from 'lucide-react';
+import { Plus, X, Sparkles, TrendingUp, ArrowRight } from 'lucide-react';
 
 interface CreatePollProps {
     onSubmit: (poll: Partial<Poll>) => void;
     onCancel: () => void;
 }
 
+const TRENDING_TOPICS = [
+    { id: 'ai', label: 'Artificial Intelligence', category: 'Tech' },
+    { id: 'remote', label: 'Remote Work', category: 'Social' },
+    { id: 'climate', label: 'Climate Change', category: 'Moral' },
+    { id: 'crypto', label: 'Crypto Future', category: 'Tech' },
+    { id: 'dating', label: 'Modern Dating', category: 'Relationships' },
+];
+
 const CreatePoll: React.FC<CreatePollProps> = ({ onSubmit, onCancel }) => {
-    const [mode, setMode] = useState<PollMode>('standard');
+    // Simplified State
     const [question, setQuestion] = useState('');
-    const [description, setDescription] = useState('');
     const [category, setCategory] = useState<Poll['category']>('Social');
     const [options, setOptions] = useState(['', '']);
+    const [allowCustomAnswers, setAllowCustomAnswers] = useState(false); // Maps to 'consciousness' mode
+    
+    // Optional / Advanced
+    const [showAdvanced, setShowAdvanced] = useState(false);
+    const [description, setDescription] = useState('');
     const [tags, setTags] = useState('');
 
     const handleAddOption = () => {
@@ -26,151 +38,194 @@ const CreatePoll: React.FC<CreatePollProps> = ({ onSubmit, onCancel }) => {
         setOptions(newOptions);
     };
 
+    const handleTrendClick = (topic: typeof TRENDING_TOPICS[0]) => {
+        setQuestion(`What do you think about ${topic.label}?`);
+        setCategory(topic.category as any);
+        setTags(`#${topic.label.replace(' ', '')}`);
+    };
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (!question) return;
-        if (mode === 'standard' && options.some(o => !o.trim())) return;
+        
+        // Validation for standard mode
+        if (!allowCustomAnswers && options.some(o => !o.trim())) return;
+
+        const mode: PollMode = allowCustomAnswers ? 'consciousness' : 'standard';
 
         onSubmit({
             question,
             description,
             category,
             mode,
-            options: mode === 'standard' ? options.filter(o => o.trim()) : [], // Send raw strings
+            options: !allowCustomAnswers ? options.filter(o => o.trim()) : [],
             tags: tags.split(' ').filter(t => t.startsWith('#') && t.length > 1)
         });
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm p-4 animate-in fade-in duration-200">
             <div className="bg-surface-100 border border-surface-300 w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
-                <div className="p-6 border-b border-surface-200 flex justify-between items-center shrink-0">
-                    <h2 className="text-xl font-display font-bold text-white">Broadcast Thought</h2>
-                    <button onClick={onCancel} className="text-gray-500 hover:text-white transition-colors">
-                        <X size={24} />
+                
+                {/* Header */}
+                <div className="p-6 border-b border-surface-200 flex justify-between items-center bg-surface-50/50">
+                    <h2 className="text-xl font-display font-bold text-white flex items-center gap-2">
+                        <Sparkles size={18} className="text-neon-blue" />
+                        Create Poll
+                    </h2>
+                    <button onClick={onCancel} className="text-gray-500 hover:text-white transition-colors bg-surface-200 rounded-full p-1">
+                        <X size={20} />
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="p-6 space-y-6 overflow-y-auto custom-scrollbar">
-                    {/* Mode Selection */}
-                    <div className="grid grid-cols-2 gap-4">
-                        <button
-                            type="button"
-                            onClick={() => setMode('standard')}
-                            className={`p-4 rounded-xl border flex flex-col items-center gap-2 transition-all ${mode === 'standard'
-                                ? 'bg-neon-blue/10 border-neon-blue text-white'
-                                : 'bg-surface-50 border-surface-300 text-gray-500 hover:border-gray-400'
-                                }`}
-                        >
-                            <List size={24} className={mode === 'standard' ? 'text-neon-blue' : ''} />
-                            <span className="text-xs font-bold uppercase tracking-wider">Standard Poll</span>
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setMode('consciousness');
-                                setCategory('Consciousness');
-                            }}
-                            className={`p-4 rounded-xl border flex flex-col items-center gap-2 transition-all ${mode === 'consciousness'
-                                ? 'bg-neon-purple/10 border-neon-purple text-white'
-                                : 'bg-surface-50 border-surface-300 text-gray-500 hover:border-gray-400'
-                                }`}
-                        >
-                            <Brain size={24} className={mode === 'consciousness' ? 'text-neon-purple' : ''} />
-                            <span className="text-xs font-bold uppercase tracking-wider">Consciousness</span>
-                        </button>
-                    </div>
-
-                    <div>
-                        <label className="block text-xs font-mono text-gray-500 mb-1 uppercase">Query</label>
-                        <input
-                            type="text"
-                            value={question}
-                            onChange={(e) => setQuestion(e.target.value)}
-                            placeholder={mode === 'standard' ? "e.g., Is AI art real art?" : "e.g., How does the future feel?"}
-                            className="w-full bg-surface-50 border border-surface-300 rounded-lg p-3 text-white focus:outline-none focus:border-neon-blue transition-colors"
-                            maxLength={140}
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-xs font-mono text-gray-500 mb-1 uppercase">Context (Optional)</label>
-                        <textarea
-                            value={description}
-                            onChange={(e) => setDescription(e.target.value)}
-                            placeholder="Add context or elaboration..."
-                            className="w-full bg-surface-50 border border-surface-300 rounded-lg p-3 text-white focus:outline-none focus:border-neon-blue transition-colors h-20 resize-none text-sm"
-                            maxLength={280}
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-xs font-mono text-gray-500 mb-1 uppercase">Channel</label>
+                <div className="overflow-y-auto custom-scrollbar flex-1">
+                    {/* Trending Section */}
+                    <div className="px-6 pt-6 pb-2">
+                        <div className="flex items-center gap-2 mb-3">
+                            <TrendingUp size={14} className="text-neon-pink" />
+                            <span className="text-xs font-bold uppercase tracking-wider text-gray-400">Trending Now</span>
+                        </div>
                         <div className="flex flex-wrap gap-2">
-                            {['Moral', 'Social', 'Politics', 'Tech', 'Hypothetical', 'Relationships', 'Consciousness'].map((cat) => (
+                            {TRENDING_TOPICS.map(topic => (
                                 <button
+                                    key={topic.id}
+                                    onClick={() => handleTrendClick(topic)}
                                     type="button"
-                                    key={cat}
-                                    onClick={() => setCategory(cat as any)}
-                                    className={`px-3 py-1 rounded text-xs font-bold border transition-all ${category === cat
-                                        ? 'bg-neon-blue text-black border-neon-blue'
-                                        : 'bg-transparent text-gray-400 border-surface-300 hover:border-gray-400'
-                                        }`}
+                                    className="px-3 py-1.5 bg-surface-200 hover:bg-surface-300 border border-surface-300 rounded-full text-xs text-gray-300 transition-colors"
                                 >
-                                    {cat}
+                                    {topic.label}
                                 </button>
                             ))}
                         </div>
                     </div>
 
-                    {mode === 'standard' && (
-                        <div className="animate-slide-up">
-                            <label className="block text-xs font-mono text-gray-500 mb-2 uppercase">Variables</label>
-                            <div className="space-y-3">
-                                {options.map((opt, idx) => (
-                                    <input
-                                        key={idx}
-                                        type="text"
-                                        value={opt}
-                                        onChange={(e) => handleOptionChange(idx, e.target.value)}
-                                        placeholder={`Option ${idx + 1}`}
-                                        className="w-full bg-surface-50 border border-surface-300 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-neon-purple transition-colors"
-                                    />
-                                ))}
-                            </div>
-                            {options.length < 4 && (
-                                <button
-                                    type="button"
-                                    onClick={handleAddOption}
-                                    className="mt-3 text-xs text-neon-blue hover:text-white flex items-center gap-1"
-                                >
-                                    <Plus size={14} /> Add Variable
-                                </button>
-                            )}
+                    <form onSubmit={handleSubmit} className="p-6 space-y-6">
+                        
+                        {/* Main Input */}
+                        <div>
+                            <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wider">Question</label>
+                            <input
+                                type="text"
+                                value={question}
+                                onChange={(e) => setQuestion(e.target.value)}
+                                placeholder="Ask the community anything..."
+                                className="w-full bg-transparent border-b-2 border-surface-300 py-2 text-xl md:text-2xl font-bold text-white placeholder-gray-600 focus:outline-none focus:border-neon-blue transition-colors"
+                                maxLength={140}
+                                autoFocus
+                            />
                         </div>
-                    )}
 
-                    <div>
-                        <label className="block text-xs font-mono text-gray-500 mb-1 uppercase">Hashtags (Optional)</label>
-                        <input
-                            type="text"
-                            value={tags}
-                            onChange={(e) => setTags(e.target.value)}
-                            placeholder="#Future #AI #Ethics (space separated)"
-                            className="w-full bg-surface-50 border border-surface-300 rounded-lg p-3 text-white focus:outline-none focus:border-neon-blue transition-colors text-sm"
-                        />
-                    </div>
+                        {/* Toggle Mode */}
+                        <div className="bg-surface-50 rounded-xl p-4 border border-surface-200 flex items-center justify-between">
+                            <div>
+                                <div className="text-sm font-bold text-gray-200">Open-Ended Responses</div>
+                                <div className="text-xs text-gray-500">Allow users to type their own answers instead of voting.</div>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setAllowCustomAnswers(!allowCustomAnswers)}
+                                className={`w-12 h-6 rounded-full relative transition-colors duration-300 ${allowCustomAnswers ? 'bg-neon-purple' : 'bg-surface-300'}`}
+                            >
+                                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all duration-300 ${allowCustomAnswers ? 'left-7' : 'left-1'}`}></div>
+                            </button>
+                        </div>
 
+                        {/* Options Input (Only visible if NOT custom answers) */}
+                        {!allowCustomAnswers && (
+                            <div className="space-y-3 animate-in slide-in-from-top-2">
+                                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">Options</label>
+                                {options.map((opt, idx) => (
+                                    <div key={idx} className="flex gap-2">
+                                        <div className="w-8 h-10 flex items-center justify-center text-gray-600 font-mono text-xs">{idx + 1}</div>
+                                        <input
+                                            type="text"
+                                            value={opt}
+                                            onChange={(e) => handleOptionChange(idx, e.target.value)}
+                                            placeholder={`Option ${idx + 1}`}
+                                            className="flex-1 bg-surface-50 border border-surface-300 rounded-lg px-4 text-sm text-white focus:outline-none focus:border-neon-blue transition-colors"
+                                        />
+                                    </div>
+                                ))}
+                                {options.length < 4 && (
+                                    <button
+                                        type="button"
+                                        onClick={handleAddOption}
+                                        className="ml-10 text-xs text-neon-blue font-bold hover:text-white flex items-center gap-1"
+                                    >
+                                        <Plus size={14} /> Add Option
+                                    </button>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Category Pucks */}
+                        <div>
+                             <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wider">Topic</label>
+                             <div className="flex flex-wrap gap-2">
+                                {['Social', 'Tech', 'Politics', 'Moral', 'Fun'].map((cat) => (
+                                    <button
+                                        type="button"
+                                        key={cat}
+                                        onClick={() => setCategory(cat as any)}
+                                        className={`px-4 py-2 rounded-lg text-xs font-bold border transition-all ${category === cat
+                                            ? 'bg-white text-black border-white'
+                                            : 'bg-surface-50 text-gray-400 border-surface-300 hover:border-gray-400'
+                                        }`}
+                                    >
+                                        {cat}
+                                    </button>
+                                ))}
+                             </div>
+                        </div>
+
+                        {/* Advanced Toggle */}
+                        <div className="pt-2">
+                            <button 
+                                type="button"
+                                onClick={() => setShowAdvanced(!showAdvanced)}
+                                className="text-xs text-gray-500 hover:text-white underline decoration-dashed underline-offset-4"
+                            >
+                                {showAdvanced ? 'Hide Options' : 'Add Context or Tags'}
+                            </button>
+                        </div>
+
+                        {showAdvanced && (
+                            <div className="space-y-4 animate-in fade-in bg-surface-50 p-4 rounded-xl border border-surface-200">
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">Context</label>
+                                    <textarea
+                                        value={description}
+                                        onChange={(e) => setDescription(e.target.value)}
+                                        placeholder="Add more details..."
+                                        className="w-full bg-surface-100 border border-surface-300 rounded-lg p-3 text-white text-sm focus:outline-none focus:border-neon-blue h-20 resize-none"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">Tags</label>
+                                    <input
+                                        type="text"
+                                        value={tags}
+                                        onChange={(e) => setTags(e.target.value)}
+                                        placeholder="#tag1 #tag2"
+                                        className="w-full bg-surface-100 border border-surface-300 rounded-lg p-3 text-white text-sm focus:outline-none focus:border-neon-blue"
+                                    />
+                                </div>
+                            </div>
+                        )}
+                        
+                    </form>
+                </div>
+
+                {/* Footer Action */}
+                <div className="p-6 border-t border-surface-200 bg-surface-50/50">
                     <button
-                        type="submit"
-                        className={`w-full text-black font-bold py-4 rounded-xl transition-all shadow-lg ${mode === 'standard'
-                            ? 'bg-white hover:bg-neon-green hover:shadow-[0_0_20px_rgba(10,255,0,0.4)]'
-                            : 'bg-neon-purple text-white hover:bg-purple-600 hover:shadow-[0_0_20px_rgba(188,19,254,0.4)]'
-                            }`}
+                        onClick={handleSubmit}
+                        className="w-full py-4 bg-white text-black font-bold rounded-xl hover:bg-neon-blue hover:scale-[1.02] transition-all shadow-lg flex items-center justify-center gap-2"
                     >
-                        {mode === 'standard' ? 'INITIATE POLL' : 'OPEN MIND CLOUD'}
+                        Launch Poll <ArrowRight size={18} />
                     </button>
-                </form>
+                </div>
+
             </div>
         </div>
     );
