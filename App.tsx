@@ -89,9 +89,11 @@ const App: React.FC = () => {
             }
 
             // C. Try to restore session
+            let currentUser = null;
             try {
                 const profile = await api.getProfile();
                 setUser(profile);
+                currentUser = profile;
             } catch (e) {
                 // No session or backend offline, user remains null
                 console.error("Session restoration failed:", e);
@@ -111,9 +113,42 @@ const App: React.FC = () => {
             } finally {
                 setIsLoadingPolls(false);
             }
+            
+            // E. Fetch Notifications if logged in
+            if(currentUser) {
+                try {
+                    const notifs = await api.getNotifications();
+                    setNotifications(notifs);
+                } catch(e) { 
+                    console.error("Failed to fetch notifications", e);
+                }
+            }
         };
         init();
     }, []);
+
+    // NEW: Notification Polling
+    useEffect(() => {
+        if (!user) return;
+
+        const fetchNotifs = async () => {
+             try {
+                const notifs = await api.getNotifications();
+                // Only update if different to avoid re-renders or noise? 
+                // For now, simple set implementation is fine or we can compare lengths/IDs
+                setNotifications(notifs);
+             } catch(e) {
+                 console.error("Polling notifications failed", e);
+             }
+        };
+
+        // Initial fetch on login (covered by init for page load, but needed here if user logs in via modal)
+        fetchNotifs();
+
+        const interval = setInterval(fetchNotifs, 30000); // Poll every 30s
+        return () => clearInterval(interval);
+    }, [user]); // Re-run when user changes
+
 
     // 2. SOCKET.IO EVENT LISTENERS
     useEffect(() => {
